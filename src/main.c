@@ -88,8 +88,8 @@ void update(void) {
 
             vec2_t projected_point = project(transformed_vertex);
 
-            projected_point.x += (window_width / 2);
-            projected_point.y += (window_height / 2);
+            projected_point.x += (int)(window_width / 2);
+            projected_point.y += (int)(window_height / 2);
 
             projected_triangle.points[j] = projected_point;
         }
