@@ -1,0 +1,16 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-Wall",
+      "-std=c99",
+      "-o",
+      "renderer",
+      "./src/main.c"
+    ],
+    "directory": "/workspaces/3drenderer",
+    "file": "/workspaces/3drenderer/src/main.c",
+    "output": "/workspaces/3drenderer/renderer"
+  }
+]

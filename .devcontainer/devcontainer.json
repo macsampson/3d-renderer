@@ -1,0 +1,13 @@
+{
+     "name": "pikuma3d",
+     "image": "registry.fedoraproject.org/fedora-toolbox:41",
+     "postCreateCommand": "sudo dnf install -y gcc gcc-c++ make cmake clang-tools-extra SDL2-devel",
+     "customizations": {
+       "vscode": {
+         "extensions": [
+           "llvm-vs-code-extensions.vscode-clangd",
+           "ms-vscode.cmake-tools"
+         ]
+       }
+     }
+   }
