@@ -6,7 +6,6 @@
 #include <SDL2/SDL_timer.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 triangle_t* triangles_to_render = NULL;
 
@@ -27,6 +26,8 @@ void setup(void) {
         window_width,
         window_height
     );
+
+    load_cube_mesh_data();
 }
 
 void process_input(void) {
@@ -64,7 +65,7 @@ void update(void) {
     }
 
     previous_frame_time = SDL_GetTicks();
-
+ 
     // intialize array of triangles to render
     triangles_to_render = NULL;
 
@@ -72,13 +73,14 @@ void update(void) {
     mesh.rotation.x += 0.01;
     mesh.rotation.z += 0.01;
 
-    for (int i = 0; i < N_MESH_FACES; i++) {
-        face_t mesh_face = mesh_faces[i];
+    int num_faces = array_length(mesh.faces);
+    for (int i = 0; i < num_faces; i++) {
+        face_t mesh_face = mesh.faces[i];
 
         vec3_t face_vertices[3];
-        face_vertices[0] = mesh_vertices[mesh_face.a - 1];
-        face_vertices[1] = mesh_vertices[mesh_face.b - 1];
-        face_vertices[2] = mesh_vertices[mesh_face.c - 1];
+        face_vertices[0] = mesh.vertices[mesh_face.a - 1];
+        face_vertices[1] = mesh.vertices[mesh_face.b - 1];
+        face_vertices[2] = mesh.vertices[mesh_face.c - 1];
 
         triangle_t projected_triangle;
 
