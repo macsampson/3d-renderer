@@ -2,6 +2,10 @@
 #include "array.h"
 #include "vector.h"
 #include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+
+mesh_t mesh = {.vertices = NULL, .faces = NULL, .rotation = {0, 0, 0}};
 
 vec3_t cube_vertices[N_CUBE_VERTICES] = {
     {.x = -1, .y = -1, .z = -1}, // 1
@@ -35,12 +39,6 @@ face_t cube_faces[N_CUBE_FACES] = {
     {.a = 6, .b = 1, .c = 4}
 };
 
-mesh_t mesh = {
-    .vertices = NULL,
-    .faces = NULL,
-    .rotation = {0, 0, 0}
-};
-
 void load_cube_mesh_data(void) {
     for (int i = 0; i < N_CUBE_VERTICES; i++) {
         array_push(mesh.vertices, cube_vertices[i]);
@@ -48,4 +46,50 @@ void load_cube_mesh_data(void) {
     for (int i = 0; i < N_CUBE_FACES; i++) {
         array_push(mesh.faces, cube_faces[i]);
     }
+}
+
+void load_obj_file_data(char* filename) {
+    FILE* fptr = fopen(filename, "r");
+
+    if (fptr == NULL) {
+        printf("Not able to open the file.");
+        return;
+    }
+
+    char line[256];
+    float x, y, z;
+
+    while (fgets(line, sizeof(line), fptr)) {
+        if (line[0] == 'v' && line[1] == ' ') {
+            int matched = sscanf(line + 2, "%f %f %f", &x, &y, &z);
+            if (matched != 3) {
+                printf("Malformed obj file.");
+                break;
+            }
+            vec3_t vertex = {.x = x, .y = y, .z = z};
+            array_push(mesh.vertices, vertex);
+        }
+
+        if (line[0] == 'f' && line[1] == ' ') {
+            int vertex_indices[3];
+            int i = 0;
+            char* tok = strtok(line + 2, " ");
+            while (tok != NULL && i < 3) {
+                sscanf(tok, "%d", &vertex_indices[i]);
+                i++;
+                tok = strtok(NULL, " ");
+            }
+
+            if (i == 3) {
+                face_t face = {
+                    .a = vertex_indices[0],
+                    .b = vertex_indices[1],
+                    .c = vertex_indices[2],
+                };
+                array_push(mesh.faces, face);
+            }
+        }
+    }
+
+    fclose(fptr);
 }

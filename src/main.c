@@ -27,7 +27,8 @@ void setup(void) {
         window_height
     );
 
-    load_cube_mesh_data();
+    // load_cube_mesh_data();
+    load_obj_file_data("./assets/f22.obj");
 }
 
 void process_input(void) {
@@ -65,7 +66,7 @@ void update(void) {
     }
 
     previous_frame_time = SDL_GetTicks();
- 
+
     // intialize array of triangles to render
     triangles_to_render = NULL;
 
@@ -137,6 +138,12 @@ void render(void) {
     SDL_RenderPresent(renderer);
 }
 
+void free_resources(void) {
+    free(color_buffer);
+    array_free(mesh.faces);
+    array_free(mesh.vertices);
+}
+
 int main(void) {
 
     is_running = initialize_window();
@@ -150,6 +157,7 @@ int main(void) {
     }
 
     destroy_window();
+    free_resources();
 
     return 0;
 }

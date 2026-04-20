@@ -1,0 +1,29 @@
+# Compiled output
+*.o
+*.obj
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+
+# Executables (no extension on Linux — match by convention)
+/build/
+/bin/
+/out/
+
+# Debug symbols
+*.dSYM/
+*.pdb
+
+# Editor / tooling
+.vscode/
+.cache/
+compile_commands.json   # if generated, not hand-written
+.clangd/
+.ccls-cache/
+
+# OS junk
+.DS_Store
+Thumbs.db

@@ -5,11 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-SDL_Window *window = NULL;
-SDL_Renderer *renderer = NULL;
+SDL_Window* window = NULL;
+SDL_Renderer* renderer = NULL;
 
-uint32_t *color_buffer = NULL;
-SDL_Texture *color_buffer_texture = NULL;
+uint32_t* color_buffer = NULL;
+SDL_Texture* color_buffer_texture = NULL;
 int window_width = 800;
 int window_height = 600;
 
@@ -117,7 +117,7 @@ void clear_color_buffer(uint32_t color) {
 }
 
 void destroy_window(void) {
-    free(color_buffer);
+
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
