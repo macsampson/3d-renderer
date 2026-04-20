@@ -1,5 +1,6 @@
 #include "mesh.h"
 #include "array.h"
+#include "triangle.h"
 #include "vector.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -60,8 +61,10 @@ void load_obj_file_data(char* filename) {
     float x, y, z;
 
     while (fgets(line, sizeof(line), fptr)) {
+
+        // read and load vertices from obj
         if (line[0] == 'v' && line[1] == ' ') {
-            int matched = sscanf(line + 2, "%f %f %f", &x, &y, &z);
+            int matched = sscanf(line, "v %f %f %f", &x, &y, &z);
             if (matched != 3) {
                 printf("Malformed obj file.");
                 break;
@@ -70,26 +73,34 @@ void load_obj_file_data(char* filename) {
             array_push(mesh.vertices, vertex);
         }
 
+        // read and load faces from obj
         if (line[0] == 'f' && line[1] == ' ') {
             int vertex_indices[3];
-            int i = 0;
-            char* tok = strtok(line + 2, " ");
-            while (tok != NULL && i < 3) {
-                sscanf(tok, "%d", &vertex_indices[i]);
-                i++;
-                tok = strtok(NULL, " ");
-            }
+            int texture_indices[3];
+            int normal_indices[3];
 
-            if (i == 3) {
-                face_t face = {
-                    .a = vertex_indices[0],
-                    .b = vertex_indices[1],
-                    .c = vertex_indices[2],
-                };
-                array_push(mesh.faces, face);
-            }
+            sscanf(
+                line,
+                "f %d/%d/%d %d/%d/%d %d/%d/%d",
+                &vertex_indices[0],
+                &texture_indices[0],
+                &normal_indices[0],
+                &vertex_indices[1],
+                &texture_indices[1],
+                &normal_indices[1],
+                &vertex_indices[2],
+                &texture_indices[2],
+                &normal_indices[2]
+            );
+
+            face_t face = {
+                .a = vertex_indices[0],
+                .b = vertex_indices[1],
+                .c = vertex_indices[2],
+            };
+
+            array_push(mesh.faces, face);
         }
     }
-
     fclose(fptr);
 }
