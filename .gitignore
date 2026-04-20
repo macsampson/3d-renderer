@@ -27,3 +27,6 @@ compile_commands.json   # if generated, not hand-written
 # OS junk
 .DS_Store
 Thumbs.db
+
+# Binary
+/renderer
