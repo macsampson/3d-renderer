@@ -7,6 +7,16 @@ void int_swap(int* a, int* b) {
     *b = tmp;
 };
 
+int compare_triangle_depth(const void* a, const void* b) {
+    triangle_t* ta = (triangle_t*)a;
+    triangle_t* tb = (triangle_t*)b;
+    if (tb->avg_depth > ta->avg_depth)
+        return 1;
+    if (tb->avg_depth < ta->avg_depth)
+        return -1;
+    return 0;
+}
+
 void fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color) {
     float inv_slope1 = (float)(x1 - x0) / (y1 - y0);
     float inv_slope2 = (float)(x2 - x0) / (y2 - y0);
