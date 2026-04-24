@@ -22,7 +22,9 @@ enum render_method {
     RENDER_WIRE,
     RENDER_WIRE_VERTEX,
     RENDER_FILL_TRI,
-    RENDER_FILL_TRI_WIRE
+    RENDER_FILL_TRI_WIRE,
+    RENDER_TEXTURED,
+    RENDER_TEXTURED_WIRE,
 };
 
 extern enum cull_method cull_method;

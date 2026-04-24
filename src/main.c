@@ -3,6 +3,7 @@
 #include "light.h"
 #include "matrix.h"
 #include "mesh.h"
+#include "texture.h"
 #include "triangle.h"
 #include "vector.h"
 #include <SDL2/SDL_keycode.h>
@@ -46,8 +47,13 @@ void setup(void) {
     float zfar = 100.0;
     proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
 
-    // load_cube_mesh_data();
-    load_obj_file_data("./assets/f22.obj");
+    // manually load hard coded texture data from static array
+    mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
+    texture_width = 64;
+    texture_height = 64;
+
+    load_cube_mesh_data();
+    // load_obj_file_data("./assets/f22.obj");
 
     // mesh.translation.y -= 100.0;
 }
@@ -76,12 +82,19 @@ void process_input(void) {
             if (event.key.keysym.sym == SDLK_4) {
                 render_method = RENDER_FILL_TRI_WIRE;
             }
+            if (event.key.keysym.sym == SDLK_5) {
+                render_method = RENDER_TEXTURED;
+            }
+            if (event.key.keysym.sym == SDLK_6) {
+                render_method = RENDER_TEXTURED_WIRE;
+            }
             if (event.key.keysym.sym == SDLK_c) {
                 cull_method = CULL_BACKFACE;
             }
             if (event.key.keysym.sym == SDLK_d) {
                 cull_method = CULL_NONE;
             }
+
             break;
         }
     }
@@ -108,8 +121,8 @@ void update(void) {
     // intialize array of triangles to render
     triangles_to_render = NULL;
 
-    mesh.rotation.y += 0.01;
-    // mesh.rotation.x += 0.02;
+    // mesh.rotation.y += 0.01;
+    mesh.rotation.x += 0.02;
     // mesh.rotation.z += 0.01;
 
     // mesh.scale.x += 0.002;
@@ -201,6 +214,7 @@ void update(void) {
 
             // scale into the view
             projected_points[j].x *= (window_width / 2.0);
+            // invert y values to account for flipped screen y coord
             projected_points[j].y *= -(window_height / 2.0);
 
             // translate
@@ -222,6 +236,7 @@ void update(void) {
                     {projected_points[1].x, projected_points[1].y},
                     {projected_points[2].x, projected_points[2].y},
                 },
+            .tex_coords = {mesh_face.a_uv, mesh_face.b_uv, mesh_face.b_uv},
             .color = triangle_color,
             .avg_depth = avg_depth,
         };
@@ -262,8 +277,27 @@ void render(void) {
             );
         }
 
+        // draw textured triangle
+        if (render_method == RENDER_TEXTURED || render_method == RENDER_TEXTURED_WIRE) {
+            draw_textured_triangle(
+                triangle.points[0].x,
+                triangle.points[0].y,
+                triangle.tex_coords[0].u,
+                triangle.tex_coords[0].v,
+                triangle.points[1].x,
+                triangle.points[1].y,
+                triangle.tex_coords[1].u,
+                triangle.tex_coords[1].v,
+                triangle.points[2].x,
+                triangle.points[2].y,
+                triangle.tex_coords[2].u,
+                triangle.tex_coords[2].v,
+                mesh_texture
+            );
+        }
+
         if (render_method == RENDER_WIRE || render_method == RENDER_FILL_TRI_WIRE ||
-            render_method == RENDER_WIRE_VERTEX) {
+            render_method == RENDER_WIRE_VERTEX || render_method == RENDER_TEXTURED_WIRE) {
             draw_triangle(
                 triangle.points[0].x,
                 triangle.points[0].y,
