@@ -41,3 +41,19 @@ void draw_textured_triangle(
 );
 void fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int Mx, int My, uint32_t color);
 void fill_flat_top_triangle(int x1, int y1, int Mx, int My, int x2, int y2, uint32_t color);
+
+void draw_texel(
+    int x,
+    int y,
+    uint32_t* texture,
+    vec2_t point_a,
+    vec2_t point_b,
+    vec2_t point_c,
+    float u0,
+    float v0,
+    float u1,
+    float v1,
+    float u2,
+    float v2
+);
+vec3_t barycentric_weights(vec2_t a, vec2_t b, vec2_t c, vec2_t p);

@@ -236,7 +236,7 @@ void update(void) {
                     {projected_points[1].x, projected_points[1].y},
                     {projected_points[2].x, projected_points[2].y},
                 },
-            .tex_coords = {mesh_face.a_uv, mesh_face.b_uv, mesh_face.b_uv},
+            .tex_coords = {mesh_face.a_uv, mesh_face.b_uv, mesh_face.c_uv},
             .color = triangle_color,
             .avg_depth = avg_depth,
         };
