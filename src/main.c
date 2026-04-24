@@ -1,11 +1,14 @@
 #include "array.h"
 #include "display.h"
+#include "light.h"
 #include "matrix.h"
 #include "mesh.h"
 #include "triangle.h"
 #include "vector.h"
 #include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_stdinc.h>
 #include <SDL2/SDL_timer.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -43,8 +46,10 @@ void setup(void) {
     float zfar = 100.0;
     proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
 
-    load_cube_mesh_data();
-    // load_obj_file_data("./assets/cube.obj");
+    // load_cube_mesh_data();
+    load_obj_file_data("./assets/f22.obj");
+
+    // mesh.translation.y -= 100.0;
 }
 
 void process_input(void) {
@@ -103,13 +108,13 @@ void update(void) {
     // intialize array of triangles to render
     triangles_to_render = NULL;
 
-    // mesh.rotation.y += 0.01;
-    mesh.rotation.x += 0.01;
+    mesh.rotation.y += 0.01;
+    // mesh.rotation.x += 0.02;
     // mesh.rotation.z += 0.01;
 
     // mesh.scale.x += 0.002;
     // mesh.scale.y += 0.001;
-    // mesh.translation.x += 0.01;
+    // mesh.translation.y -= 1.0;
     mesh.translation.z = 5;
 
     mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
@@ -165,24 +170,24 @@ void update(void) {
         }
 
         // backface culling
+        vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]);
+        vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]);
+        vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]);
+
+        vec3_t vector_ab = vec3_sub(vector_b, vector_a);
+        vec3_t vector_ac = vec3_sub(vector_c, vector_a);
+        vec3_normalize(&vector_ab);
+        vec3_normalize(&vector_ac);
+
+        vec3_t normal = vec3_cross(vector_ab, vector_ac);
+        vec3_normalize(&normal);
+
+        // find vector between the triangle point and the cam origin
+        vec3_t camera_ray = vec3_sub(camera_pos, vector_a);
+
+        float dot_normal_cam = vec3_dot(normal, camera_ray);
+
         if (cull_method == CULL_BACKFACE) {
-            vec3_t vector_a = vec3_from_vec4(transformed_vertices[0]);
-            vec3_t vector_b = vec3_from_vec4(transformed_vertices[1]);
-            vec3_t vector_c = vec3_from_vec4(transformed_vertices[2]);
-
-            vec3_t vector_ab = vec3_sub(vector_b, vector_a);
-            vec3_t vector_ac = vec3_sub(vector_c, vector_a);
-            vec3_normalize(&vector_ab);
-            vec3_normalize(&vector_ac);
-
-            vec3_t normal = vec3_cross(vector_ab, vector_ac);
-            vec3_normalize(&normal);
-
-            // find vector between the triangle point and the cam origin
-            vec3_t camera_ray = vec3_sub(camera_pos, vector_a);
-
-            float dot_normal_cam = vec3_dot(normal, camera_ray);
-
             if (dot_normal_cam < 0)
                 continue;
         }
@@ -196,7 +201,7 @@ void update(void) {
 
             // scale into the view
             projected_points[j].x *= (window_width / 2.0);
-            projected_points[j].y *= (window_height / 2.0);
+            projected_points[j].y *= -(window_height / 2.0);
 
             // translate
             projected_points[j].x += (int)(window_width / 2);
@@ -207,6 +212,9 @@ void update(void) {
             (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z) /
             3.0;
 
+        float light_intensity_factor = -vec3_dot(normal, light.dir);
+        uint32_t triangle_color = light_apply_intensity(mesh_face.color, light_intensity_factor);
+
         triangle_t projected_triangle = {
             .points =
                 {
@@ -214,7 +222,7 @@ void update(void) {
                     {projected_points[1].x, projected_points[1].y},
                     {projected_points[2].x, projected_points[2].y},
                 },
-            .color = mesh_face.color,
+            .color = triangle_color,
             .avg_depth = avg_depth,
         };
 
