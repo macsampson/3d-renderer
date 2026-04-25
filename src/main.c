@@ -121,8 +121,8 @@ void update(void) {
     // intialize array of triangles to render
     triangles_to_render = NULL;
 
-    // mesh.rotation.y += 0.01;
-    mesh.rotation.x += 0.02;
+    mesh.rotation.y += 0.01;
+    // mesh.rotation.x += 0.02;
     // mesh.rotation.z += 0.01;
 
     // mesh.scale.x += 0.002;
@@ -214,8 +214,8 @@ void update(void) {
 
             // scale into the view
             projected_points[j].x *= (window_width / 2.0);
-            // invert y values to account for flipped screen y coord
-            projected_points[j].y *= -(window_height / 2.0);
+            // TODO: invert y values to account for flipped screen y coord
+            projected_points[j].y *= (window_height / 2.0);
 
             // translate
             projected_points[j].x += (int)(window_width / 2);
@@ -232,9 +232,18 @@ void update(void) {
         triangle_t projected_triangle = {
             .points =
                 {
-                    {projected_points[0].x, projected_points[0].y},
-                    {projected_points[1].x, projected_points[1].y},
-                    {projected_points[2].x, projected_points[2].y},
+                    {projected_points[0].x,
+                     projected_points[0].y,
+                     projected_points[0].z,
+                     projected_points[0].w},
+                    {projected_points[1].x,
+                     projected_points[1].y,
+                     projected_points[1].z,
+                     projected_points[1].w},
+                    {projected_points[2].x,
+                     projected_points[2].y,
+                     projected_points[2].z,
+                     projected_points[2].w},
                 },
             .tex_coords = {mesh_face.a_uv, mesh_face.b_uv, mesh_face.c_uv},
             .color = triangle_color,
@@ -282,14 +291,20 @@ void render(void) {
             draw_textured_triangle(
                 triangle.points[0].x,
                 triangle.points[0].y,
+                triangle.points[0].z,
+                triangle.points[0].w,
                 triangle.tex_coords[0].u,
                 triangle.tex_coords[0].v,
                 triangle.points[1].x,
                 triangle.points[1].y,
+                triangle.points[1].z,
+                triangle.points[1].w,
                 triangle.tex_coords[1].u,
                 triangle.tex_coords[1].v,
                 triangle.points[2].x,
                 triangle.points[2].y,
+                triangle.points[2].z,
+                triangle.points[2].w,
                 triangle.tex_coords[2].u,
                 triangle.tex_coords[2].v,
                 mesh_texture
