@@ -56,11 +56,8 @@ void draw_texel(
     vec4_t point_a,
     vec4_t point_b,
     vec4_t point_c,
-    float u0,
-    float v0,
-    float u1,
-    float v1,
-    float u2,
-    float v2
+    tex2_t a_uv,
+    tex2_t b_uv,
+    tex2_t c_uv
 );
 vec3_t barycentric_weights(vec2_t a, vec2_t b, vec2_t c, vec2_t p);
