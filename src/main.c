@@ -5,6 +5,7 @@
 #include "mesh.h"
 #include "texture.h"
 #include "triangle.h"
+#include "upng.h"
 #include "vector.h"
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_stdinc.h>
@@ -35,7 +36,7 @@ void setup(void) {
 
     color_buffer_texture = SDL_CreateTexture(
         renderer,
-        SDL_PIXELFORMAT_ARGB8888,
+        SDL_PIXELFORMAT_RGBA32,
         SDL_TEXTUREACCESS_STREAMING,
         window_width,
         window_height
@@ -48,14 +49,17 @@ void setup(void) {
     proj_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
 
     // manually load hard coded texture data from static array
-    mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
-    texture_width = 64;
-    texture_height = 64;
+    // mesh_texture = (uint32_t*)REDBRICK_TEXTURE;
+    // texture_width = 64;
+    // texture_height = 64;
 
-    load_cube_mesh_data();
-    // load_obj_file_data("./assets/f22.obj");
+    // load_cube_mesh_data();
+    load_obj_file_data("./assets/crab.obj");
+
+    load_png_texture_data("./assets/crab.png");
 
     // mesh.translation.y -= 100.0;
+    // mesh.translation.z += 200.0;
 }
 
 void process_input(void) {
@@ -144,9 +148,9 @@ void update(void) {
         face_t mesh_face = mesh.faces[i];
 
         vec3_t face_vertices[3];
-        face_vertices[0] = mesh.vertices[mesh_face.a - 1];
-        face_vertices[1] = mesh.vertices[mesh_face.b - 1];
-        face_vertices[2] = mesh.vertices[mesh_face.c - 1];
+        face_vertices[0] = mesh.vertices[mesh_face.a];
+        face_vertices[1] = mesh.vertices[mesh_face.b];
+        face_vertices[2] = mesh.vertices[mesh_face.c];
 
         vec4_t transformed_vertices[3];
 
@@ -212,9 +216,10 @@ void update(void) {
 
             projected_points[j] = mat4_mul_vec4_project(proj_matrix, transformed_vertices[j]);
 
+            projected_points[j].y *= -1;
+
             // scale into the view
             projected_points[j].x *= (window_width / 2.0);
-            // TODO: invert y values to account for flipped screen y coord
             projected_points[j].y *= (window_height / 2.0);
 
             // translate
@@ -338,6 +343,7 @@ void render(void) {
 
 void free_resources(void) {
     free(color_buffer);
+    upng_free(png_texture);
     array_free(mesh.faces);
     array_free(mesh.vertices);
 }

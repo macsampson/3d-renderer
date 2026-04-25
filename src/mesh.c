@@ -1,5 +1,6 @@
 #include "mesh.h"
 #include "array.h"
+#include "texture.h"
 #include "triangle.h"
 #include "vector.h"
 #include <stddef.h>
@@ -27,23 +28,23 @@ vec3_t cube_vertices[N_CUBE_VERTICES] = {
 
 face_t cube_faces[N_CUBE_FACES] = {
     // front
-    {.a = 1, .b = 2, .c = 3, .a_uv = {0, 0}, .b_uv = {0, 1}, .c_uv = {1, 1}, .color = 0xFFFFFFFF},
-    {.a = 1, .b = 3, .c = 4, .a_uv = {0, 0}, .b_uv = {1, 1}, .c_uv = {1, 0}, .color = 0xFFFFFFFF},
+    {.a = 1, .b = 2, .c = 3, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .color = 0xFFFFFFFF},
+    {.a = 1, .b = 3, .c = 4, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .color = 0xFFFFFFFF},
     // right
-    {.a = 4, .b = 3, .c = 5, .a_uv = {0, 0}, .b_uv = {0, 1}, .c_uv = {1, 1}, .color = 0xFFFFFFFF},
-    {.a = 4, .b = 5, .c = 6, .a_uv = {0, 0}, .b_uv = {1, 1}, .c_uv = {1, 0}, .color = 0xFFFFFFFF},
+    {.a = 4, .b = 3, .c = 5, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .color = 0xFFFFFFFF},
+    {.a = 4, .b = 5, .c = 6, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .color = 0xFFFFFFFF},
     // back
-    {.a = 6, .b = 5, .c = 7, .a_uv = {0, 0}, .b_uv = {0, 1}, .c_uv = {1, 1}, .color = 0xFFFFFFFF},
-    {.a = 6, .b = 7, .c = 8, .a_uv = {0, 0}, .b_uv = {1, 1}, .c_uv = {1, 0}, .color = 0xFFFFFFFF},
+    {.a = 6, .b = 5, .c = 7, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .color = 0xFFFFFFFF},
+    {.a = 6, .b = 7, .c = 8, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .color = 0xFFFFFFFF},
     // left
-    {.a = 8, .b = 7, .c = 2, .a_uv = {0, 0}, .b_uv = {0, 1}, .c_uv = {1, 1}, .color = 0xFFFFFFFF},
-    {.a = 8, .b = 2, .c = 1, .a_uv = {0, 0}, .b_uv = {1, 1}, .c_uv = {1, 0}, .color = 0xFFFFFFFF},
+    {.a = 8, .b = 7, .c = 2, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .color = 0xFFFFFFFF},
+    {.a = 8, .b = 2, .c = 1, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .color = 0xFFFFFFFF},
     // top
-    {.a = 2, .b = 7, .c = 5, .a_uv = {0, 0}, .b_uv = {0, 1}, .c_uv = {1, 1}, .color = 0xFFFFFFFF},
-    {.a = 2, .b = 5, .c = 3, .a_uv = {0, 0}, .b_uv = {1, 1}, .c_uv = {1, 0}, .color = 0xFFFFFFFF},
+    {.a = 2, .b = 7, .c = 5, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .color = 0xFFFFFFFF},
+    {.a = 2, .b = 5, .c = 3, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .color = 0xFFFFFFFF},
     // bottom
-    {.a = 6, .b = 8, .c = 1, .a_uv = {0, 0}, .b_uv = {0, 1}, .c_uv = {1, 1}, .color = 0xFFFFFFFF},
-    {.a = 6, .b = 1, .c = 4, .a_uv = {0, 0}, .b_uv = {1, 1}, .c_uv = {1, 0}, .color = 0xFFFFFFFF}
+    {.a = 6, .b = 8, .c = 1, .a_uv = {0, 1}, .b_uv = {0, 0}, .c_uv = {1, 0}, .color = 0xFFFFFFFF},
+    {.a = 6, .b = 1, .c = 4, .a_uv = {0, 1}, .b_uv = {1, 0}, .c_uv = {1, 1}, .color = 0xFFFFFFFF}
 };
 
 void load_cube_mesh_data(void) {
@@ -66,6 +67,8 @@ void load_obj_file_data(char* filename) {
     char line[256];
     float x, y, z;
 
+    tex2_t* tex_coords = NULL;
+
     while (fgets(line, sizeof(line), fptr)) {
 
         // read and load vertices from obj
@@ -77,6 +80,13 @@ void load_obj_file_data(char* filename) {
             }
             vec3_t vertex = {.x = x, .y = y, .z = z};
             array_push(mesh.vertices, vertex);
+        }
+
+        // read and load texture information
+        if (line[0] == 'v' && line[1] == 't' && line[2] == ' ') {
+            tex2_t tex_coord;
+            sscanf(line, "vt %f %f", &tex_coord.u, &tex_coord.v);
+            array_push(tex_coords, tex_coord);
         }
 
         // read and load faces from obj
@@ -112,9 +122,12 @@ void load_obj_file_data(char* filename) {
             }
 
             face_t face = {
-                .a = vertex_indices[0],
-                .b = vertex_indices[1],
-                .c = vertex_indices[2],
+                .a = vertex_indices[0] - 1,
+                .b = vertex_indices[1] - 1,
+                .c = vertex_indices[2] - 1,
+                .a_uv = tex_coords[texture_indices[0] - 1],
+                .b_uv = tex_coords[texture_indices[1] - 1],
+                .c_uv = tex_coords[texture_indices[2] - 1],
                 .color = 0xFFFFFFFF,
             };
 
@@ -122,4 +135,5 @@ void load_obj_file_data(char* filename) {
         }
     }
     fclose(fptr);
+    array_free(tex_coords);
 }

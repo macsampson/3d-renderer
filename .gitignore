@@ -13,6 +13,8 @@
 /bin/
 /out/
 
+!assets/*.obj
+
 # Debug symbols
 *.dSYM/
 *.pdb
@@ -30,3 +32,4 @@ Thumbs.db
 
 # Binary
 /renderer
+
