@@ -55,9 +55,9 @@ void setup(void) {
     // texture_height = 64;
 
     // load_cube_mesh_data();
-    load_obj_file_data("./assets/f117.obj");
+    load_obj_file_data("./assets/drone.obj");
 
-    load_png_texture_data("./assets/f117.png");
+    load_png_texture_data("./assets/drone.png");
 
     // mesh.translation.y -= 100.0;
     // mesh.translation.z += 200.0;
@@ -127,8 +127,8 @@ void update(void) {
     triangles_to_render = NULL;
 
     mesh.rotation.y += 0.01;
-    // mesh.rotation.x += 0.02;
-    // mesh.rotation.z += 0.01;
+    mesh.rotation.x += 0.02;
+    mesh.rotation.z += 0.01;
 
     // mesh.scale.x += 0.002;
     // mesh.scale.y += 0.001;
@@ -228,10 +228,6 @@ void update(void) {
             projected_points[j].y += (int)(window_height / 2);
         }
 
-        float avg_depth =
-            (transformed_vertices[0].z + transformed_vertices[1].z + transformed_vertices[2].z) /
-            3.0;
-
         float light_intensity_factor = -vec3_dot(normal, light.dir);
         uint32_t triangle_color = light_apply_intensity(mesh_face.color, light_intensity_factor);
 
@@ -252,14 +248,15 @@ void update(void) {
                      projected_points[2].w},
                 },
             .tex_coords = {mesh_face.a_uv, mesh_face.b_uv, mesh_face.c_uv},
-            .color = triangle_color,
-            .avg_depth = avg_depth,
+            .color = triangle_color
         };
 
         array_push(triangles_to_render, projected_triangle);
     }
-    int num_triangles = array_length(triangles_to_render);
-    qsort(triangles_to_render, num_triangles, sizeof(triangle_t), compare_triangle_depth);
+
+    // quicksort
+    // int num_triangles = array_length(triangles_to_render);
+    // qsort(triangles_to_render, num_triangles, sizeof(triangle_t), compare_triangle_depth);
 }
 
 void render(void) {
@@ -284,10 +281,16 @@ void render(void) {
             draw_filled_triangle(
                 triangle.points[0].x,
                 triangle.points[0].y,
+                triangle.points[0].z,
+                triangle.points[0].w,
                 triangle.points[1].x,
                 triangle.points[1].y,
+                triangle.points[1].z,
+                triangle.points[1].w,
                 triangle.points[2].x,
                 triangle.points[2].y,
+                triangle.points[2].z,
+                triangle.points[2].w,
                 triangle.color
             );
         }

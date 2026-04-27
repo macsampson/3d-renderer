@@ -19,11 +19,24 @@ typedef struct {
     vec4_t points[3];
     tex2_t tex_coords[3];
     uint32_t color;
-    float avg_depth;
 } triangle_t;
 
 int compare_triangle_depth(const void* a, const void* b);
-void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
+void draw_filled_triangle(
+    int x0,
+    int y0,
+    float z0,
+    float w0,
+    int x1,
+    int y1,
+    float z1,
+    float w1,
+    int x2,
+    int y2,
+    float z2,
+    float w2,
+    uint32_t color
+);
 
 void draw_textured_triangle(
     int x0,
@@ -60,4 +73,14 @@ void draw_texel(
     tex2_t b_uv,
     tex2_t c_uv
 );
+
+void draw_triangle_pixel(
+    int x,
+    int y,
+    uint32_t color,
+    vec4_t point_a,
+    vec4_t point_b,
+    vec4_t point_c
+);
+
 vec3_t barycentric_weights(vec2_t a, vec2_t b, vec2_t c, vec2_t p);
