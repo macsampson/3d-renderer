@@ -1,7 +1,5 @@
 #pragma once
-#include "texture.h"
-#include "vector.h"
-#include <math.h>
+
 #define DISPLAY_H
 
 #include <SDL2/SDL.h>
@@ -13,7 +11,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define FPS 60
+#define FPS 120
 #define FRAME_TARGET_TIME (1000 / FPS)
 
 enum cull_method {
