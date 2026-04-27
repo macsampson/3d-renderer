@@ -33,6 +33,7 @@ void setup(void) {
     cull_method = CULL_BACKFACE;
 
     color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
+    z_buffer = (float*)malloc(sizeof(float) * window_width * window_height);
 
     color_buffer_texture = SDL_CreateTexture(
         renderer,
@@ -54,9 +55,9 @@ void setup(void) {
     // texture_height = 64;
 
     // load_cube_mesh_data();
-    load_obj_file_data("./assets/crab.obj");
+    load_obj_file_data("./assets/f117.obj");
 
-    load_png_texture_data("./assets/crab.png");
+    load_png_texture_data("./assets/f117.png");
 
     // mesh.translation.y -= 100.0;
     // mesh.translation.z += 200.0;
@@ -337,12 +338,14 @@ void render(void) {
     render_color_buffer();
 
     clear_color_buffer(0x00000000);
+    clear_z_buffer();
 
     SDL_RenderPresent(renderer);
 }
 
 void free_resources(void) {
     free(color_buffer);
+    free(z_buffer);
     upng_free(png_texture);
     array_free(mesh.faces);
     array_free(mesh.vertices);
