@@ -7,6 +7,7 @@
 #include "triangle.h"
 #include "upng.h"
 #include "vector.h"
+#include "camera.h"
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_stdinc.h>
 #include <SDL2/SDL_timer.h>
@@ -18,8 +19,10 @@
 triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH];
 int num_triangles_to_render = 0;
 
-vec3_t camera_pos = {0, 0, 0};
+// vec3_t camera_pos = {0, 0, 0};
 mat4_t proj_matrix;
+mat4_t world_matrix;
+mat4_t view_matrix;
 // vec3_t mesh.rotation = {.x = 0, .y = 0, .z = 0};
 
 // float fov_vector = 640;
@@ -136,7 +139,14 @@ void update(void) {
     // mesh.scale.x += 0.002;
     // mesh.scale.y += 0.001;
     // mesh.translation.y -= 1.0;
-    mesh.translation.z = 5;
+    mesh.translation.z = 5.0;
+    camera.position.x += 0.008;
+    camera.position.y += 0.008;
+
+    // create teh view matrix looking at a hard coded traget point
+    vec3_t target = {0,0,5};
+    vec3_t up = {0,1,0};
+    view_matrix = mat4_look_at(camera.position, target, up);
 
     mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
 
@@ -174,6 +184,9 @@ void update(void) {
 
             transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
 
+            // multiply the view matrix by the vector to transform the scene into vector space
+            transformed_vertex = mat4_mul_vec4(view_matrix, transformed_vertex);
+
             // transformed_vertex = mat4_mul_vec4(scale_matrix, transformed_vertex);
             // transformed_vertex = mat4_mul_vec4(rotation_matrix_x, transformed_vertex);
             // transformed_vertex = mat4_mul_vec4(rotation_matrix_y, transformed_vertex);
@@ -204,7 +217,8 @@ void update(void) {
         vec3_normalize(&normal);
 
         // find vector between the triangle point and the cam origin
-        vec3_t camera_ray = vec3_sub(camera_pos, vector_a);
+        vec3_t origin = {0,0,0};
+        vec3_t camera_ray = vec3_sub(origin, vector_a);
 
         float dot_normal_cam = vec3_dot(normal, camera_ray);
 
