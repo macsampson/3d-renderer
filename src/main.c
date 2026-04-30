@@ -28,6 +28,7 @@ mat4_t view_matrix;
 // float fov_vector = 640;
 bool is_running = false;
 int previous_frame_time = 0;
+float delta_time;
 
 enum cull_method cull_method;
 enum render_method render_method;
@@ -101,8 +102,28 @@ void process_input(void) {
             if (event.key.keysym.sym == SDLK_c) {
                 cull_method = CULL_BACKFACE;
             }
-            if (event.key.keysym.sym == SDLK_d) {
+            if (event.key.keysym.sym == SDLK_x) {
                 cull_method = CULL_NONE;
+            }
+            if (event.key.keysym.sym == SDLK_e) {
+                camera.position.y += 3.0 * delta_time;
+            }
+            if (event.key.keysym.sym == SDLK_q) {
+                camera.position.y -= 3.0 * delta_time;
+            }
+            if (event.key.keysym.sym == SDLK_a) {
+                camera.yaw_angle -= 1.0 * delta_time;
+            }
+            if (event.key.keysym.sym == SDLK_d) {
+                camera.yaw_angle += 1.0 * delta_time;
+            }
+            if (event.key.keysym.sym == SDLK_w) {
+                camera.forward_velocity = vec3_mult(camera.direction, 5.0 * delta_time);
+                camera.position = vec3_add(camera.position, camera.forward_velocity);
+            }
+            if (event.key.keysym.sym == SDLK_s) {
+                    camera.forward_velocity = vec3_mult(camera.direction, 5.0 * delta_time);
+                camera.position = vec3_sub(camera.position, camera.forward_velocity);
             }
 
             break;
@@ -126,26 +147,40 @@ void update(void) {
         SDL_Delay(wait_time);
     }
 
+    // get a delta time fator 
+    delta_time = (SDL_GetTicks() - previous_frame_time) / 1000.0;
+
+
     previous_frame_time = SDL_GetTicks();
 
     // intialize array of triangles to render
     // triangles_to_render = NULL;
     num_triangles_to_render = 0;
 
-    mesh.rotation.y += 0.01;
-    // mesh.rotation.x += 0.02;
-    // mesh.rotation.z += 0.01;
+    // mesh.rotation.y += 0.6 * delta_time;
+    // mesh.rotation.x += 0.6 * delta_time ;
+    // mesh.rotation.z += 0.6 * delta_time;
 
     // mesh.scale.x += 0.002;
     // mesh.scale.y += 0.001;
     // mesh.translation.y -= 1.0;
     mesh.translation.z = 5.0;
-    camera.position.x += 0.008;
-    camera.position.y += 0.008;
 
-    // create teh view matrix looking at a hard coded traget point
-    vec3_t target = {0,0,5};
+
+    // create teh view matrix
+
+    // vec3_t target = {0,0,5};
+    // vec3_t up = {0,1,0};
+
+    
+    vec3_t target = {0,0,1};
+    mat4_t camera_yaw_rotation = mat4_make_rotation_y(camera.yaw_angle);
+    camera.direction = vec3_from_vec4(mat4_mul_vec4(camera_yaw_rotation, vec4_from_vec3(target)));
+    
+    // offset the camera in the direction im looking at
+    target = vec3_add(camera.position, camera.direction);
     vec3_t up = {0,1,0};
+
     view_matrix = mat4_look_at(camera.position, target, up);
 
     mat4_t scale_matrix = mat4_make_scale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
