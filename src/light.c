@@ -1,7 +1,11 @@
 #include "light.h"
+#include "vector.h"
 #include <stdint.h>
 
-light_t light = {.dir = {0, 0, 1}};
+static light_t light = {.dir = {0, 0, 1}};
+
+void init_light(vec3_t dir) { light.dir = dir; }
+vec3_t get_light_dir() { return light.dir; }
 
 uint32_t light_apply_intensity(uint32_t original_color, float percentage_factor) {
 
