@@ -14,6 +14,7 @@ typedef struct {
     tex2_t b_uv;
     tex2_t c_uv;
     uint32_t color;
+    int material_index;
 } face_t;
 
 typedef struct {

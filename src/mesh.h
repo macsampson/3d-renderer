@@ -6,9 +6,15 @@
 #include "vector.h"
 
 typedef struct {
+    char name[64];
+    upng_t* texture;
+} material_t;
+
+typedef struct {
     vec3_t* vertices;
     face_t* faces;
     upng_t* texture;
+    material_t* materials;
     vec3_t rotation;
     vec3_t scale;
     vec3_t translation;

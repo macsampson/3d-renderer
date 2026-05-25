@@ -63,19 +63,19 @@ void setup(void) {
 
     // TODO
     load_mesh(
-        "./assets/drone.obj",
-        "./assets/drone.png",
+        "./assets/wolf/DolLinkkemono.obj",
+        "./assets/crab.png",
         vec3_new(1, 1, 1),
         vec3_new(-3, 0, 8),
         vec3_new(0, 0, 0)
     );
-    load_mesh(
-        "./assets/crab.obj",
-        "./assets/crab.png",
-        vec3_new(1, 1, 1),
-        vec3_new(3, 0, 8),
-        vec3_new(0, 0, 0)
-    );
+    // load_mesh(
+    //     "./assets/adult_link/Untitled.obj",
+    //     "./assets/crab.png",
+    //     vec3_new(1, 1, 1),
+    //     vec3_new(3, 0, 8),
+    //     vec3_new(0, 0, 0)
+    // );
 }
 
 void process_input(void) {
@@ -329,7 +329,10 @@ void process_graphics_pipeline_stages(mesh_t* mesh) {
                      {triangle_after_clipping.tex_coords[2].u,
                       triangle_after_clipping.tex_coords[2].v}},
                 .color = triangle_color,
-                .texture = mesh->texture
+                .texture = (mesh_face.material_index >= 0 && mesh->materials != NULL &&
+                            mesh->materials[mesh_face.material_index].texture != NULL)
+                               ? mesh->materials[mesh_face.material_index].texture
+                               : mesh->texture
             };
 
             // really bad for performance!!
