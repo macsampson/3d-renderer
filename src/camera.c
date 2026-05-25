@@ -24,7 +24,13 @@ void set_camera_forward_velocity(vec3_t forward_velocity) {
     camera.forward_velocity = forward_velocity;
 };
 void rotate_camera_yaw(float angle) { camera.yaw += angle; };
-void rotate_camera_pitch(float angle) { camera.pitch += angle; };
+void rotate_camera_pitch(float angle) {
+    camera.pitch += angle;
+    if (camera.pitch > 1.5f)
+        camera.pitch = 1.5f;
+    if (camera.pitch < -1.5f)
+        camera.pitch = -1.5f;
+};
 
 vec3_t get_camera_lookat_target(void) {
     vec3_t target = {0, 0, 1};

@@ -9,7 +9,9 @@
 #include "triangle.h"
 #include "upng.h"
 #include "vector.h"
+#include <SDL2/SDL_events.h>
 #include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_mouse.h>
 #include <SDL2/SDL_stdinc.h>
 #include <SDL2/SDL_timer.h>
 #include <math.h>
@@ -33,8 +35,11 @@ float delta_time;
 
 // enum cull_method cull_method;
 // enum render_method render_method;
+#define MOUSE_SENSITIVITY 0.003f
 
 void setup(void) {
+
+    SDL_SetRelativeMouseMode(SDL_TRUE);
 
     set_render_method(RENDER_WIRE);
     set_cull_method(CULL_BACKFACE);
@@ -58,15 +63,15 @@ void setup(void) {
 
     // TODO
     load_mesh(
-        "./assets/f22.obj",
-        "./assets/f22.png",
+        "./assets/drone.obj",
+        "./assets/drone.png",
         vec3_new(1, 1, 1),
         vec3_new(-3, 0, 8),
         vec3_new(0, 0, 0)
     );
     load_mesh(
-        "./assets/efa.obj",
-        "./assets/efa.png",
+        "./assets/crab.obj",
+        "./assets/crab.png",
         vec3_new(1, 1, 1),
         vec3_new(3, 0, 8),
         vec3_new(0, 0, 0)
@@ -118,48 +123,73 @@ void process_input(void) {
                 set_cull_method(CULL_NONE);
                 break;
             }
-            if (event.key.keysym.sym == SDLK_e) {
-                // camera.position.y += 3.0 * delta_time;
-                // vec3_t pos = get_camera_position();
-                // set_camera_position(vec3_t position);
-                break;
-            }
-            if (event.key.keysym.sym == SDLK_q) {
-                // camera.position.y -= 3.0 * delta_time;
-                break;
-            }
-            if (event.key.keysym.sym == SDLK_a) {
-                // camera.yaw_angle -= 1.0 * delta_time;
-                rotate_camera_yaw(-1.0 * delta_time);
-                break;
-            }
-            if (event.key.keysym.sym == SDLK_d) {
-                // camera.yaw_angle += 1.0 * delta_time;
-                rotate_camera_yaw(1.0 * delta_time);
-                break;
-            }
-            if (event.key.keysym.sym == SDLK_w) {
-                set_camera_forward_velocity(vec3_mult(get_camera_direction(), 5.0 * delta_time));
-                set_camera_position(vec3_add(get_camera_position(), get_camera_forward_velocity()));
-                break;
-            }
-            if (event.key.keysym.sym == SDLK_s) {
-                set_camera_forward_velocity(vec3_mult(get_camera_direction(), 5.0 * delta_time));
-                set_camera_position(vec3_sub(get_camera_position(), get_camera_forward_velocity()));
-                break;
-            }
-            if (event.key.keysym.sym == SDLK_UP) {
-                rotate_camera_pitch(3.0 * delta_time);
-                break;
-            }
-            if (event.key.keysym.sym == SDLK_DOWN) {
-                rotate_camera_pitch(-3.0 * delta_time);
-                break;
-            }
+            // if (event.key.keysym.sym == SDLK_e) {
+            //     // camera.position.y += 3.0 * delta_time;
+            //     // vec3_t pos = get_camera_position();
+            //     // set_camera_position(vec3_t position);
+            //     break;
+            // }
+            // if (event.key.keysym.sym == SDLK_q) {
+            //     // camera.position.y -= 3.0 * delta_time;
+            //     break;
+            // }
 
+            // if (event.key.keysym.sym == SDLK_a) {
+            //     // camera.yaw_angle -= 1.0 * delta_time;
+            //     rotate_camera_yaw(-1.0 * delta_time);
+            //     break;
+            // }
+            // if (event.key.keysym.sym == SDLK_d) {
+            //     // camera.yaw_angle += 1.0 * delta_time;
+            //     rotate_camera_yaw(1.0 * delta_time);
+            //     break;
+            // }
+            // if (event.key.keysym.sym == SDLK_w) {
+            //     set_camera_forward_velocity(vec3_mult(get_camera_direction(), 5.0 * delta_time));
+            //     set_camera_position(vec3_add(get_camera_position(),
+            //     get_camera_forward_velocity())); break;
+            // }
+            // if (event.key.keysym.sym == SDLK_s) {
+            //     set_camera_forward_velocity(vec3_mult(get_camera_direction(), 5.0 * delta_time));
+            //     set_camera_position(vec3_sub(get_camera_position(),
+            //     get_camera_forward_velocity())); break;
+            // }
+            // if (event.key.keysym.sym == SDLK_UP) {
+            //     rotate_camera_pitch(3.0 * delta_time);
+            //     break;
+            // }
+            // if (event.key.keysym.sym == SDLK_DOWN) {
+            //     rotate_camera_pitch(-3.0 * delta_time);
+            //     break;
+            // }
+
+            break;
+        case SDL_MOUSEMOTION:
+            rotate_camera_yaw(event.motion.xrel * MOUSE_SENSITIVITY);
+            rotate_camera_pitch(event.motion.yrel * MOUSE_SENSITIVITY);
             break;
         }
     }
+
+    const Uint8* keys = SDL_GetKeyboardState(NULL);
+    vec3_t dir = get_camera_direction();
+    vec3_t up = {0, 1, 0};
+    vec3_t right = vec3_cross(dir, up);
+    vec3_normalize(&right);
+    float speed = 5.0f * delta_time;
+
+    if (keys[SDL_SCANCODE_W])
+        set_camera_position(vec3_add(get_camera_position(), vec3_mult(dir, speed)));
+    if (keys[SDL_SCANCODE_S])
+        set_camera_position(vec3_sub(get_camera_position(), vec3_mult(dir, speed)));
+    if (keys[SDL_SCANCODE_A])
+        set_camera_position(vec3_add(get_camera_position(), vec3_mult(right, speed)));
+    if (keys[SDL_SCANCODE_D])
+        set_camera_position(vec3_sub(get_camera_position(), vec3_mult(right, speed)));
+    if (keys[SDL_SCANCODE_E])
+        set_camera_position(vec3_add(get_camera_position(), vec3_mult(up, speed)));
+    if (keys[SDL_SCANCODE_Q])
+        set_camera_position(vec3_sub(get_camera_position(), vec3_mult(up, speed)));
 }
 
 void process_graphics_pipeline_stages(mesh_t* mesh) {
