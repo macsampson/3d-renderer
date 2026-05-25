@@ -2,91 +2,27 @@
 #include "display.h"
 #include "swap.h"
 #include "texture.h"
+#include "upng.h"
 #include "vector.h"
 #include <stdint.h>
 #include <stdlib.h>
 
-// int compare_triangle_depth(const void* a, const void* b) {
-//     triangle_t* ta = (triangle_t*)a;
-//     triangle_t* tb = (triangle_t*)b;
-//     if (tb->avg_depth > ta->avg_depth)
-//         return 1;
-//     if (tb->avg_depth < ta->avg_depth)
-//         return -1;
-//     return 0;
-// }
+vec3_t get_triangle_normal(vec4_t vertices[3]) {
+    // backface culling
+    vec3_t vector_a = vec3_from_vec4(vertices[0]);
+    vec3_t vector_b = vec3_from_vec4(vertices[1]);
+    vec3_t vector_c = vec3_from_vec4(vertices[2]);
 
-// void fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color) {
-//     float inv_slope1 = (float)(x1 - x0) / (y1 - y0);
-//     float inv_slope2 = (float)(x2 - x0) / (y2 - y0);
+    vec3_t vector_ab = vec3_sub(vector_b, vector_a);
+    vec3_t vector_ac = vec3_sub(vector_c, vector_a);
+    vec3_normalize(&vector_ab);
+    vec3_normalize(&vector_ac);
 
-//     float x_start = x0;
-//     float x_end = x0;
+    vec3_t normal = vec3_cross(vector_ab, vector_ac);
+    vec3_normalize(&normal);
 
-//     for (int y = y0; y <= y2; y++) {
-//         draw_line(x_start, y, x_end, y, color);
-//         x_start += inv_slope1;
-//         x_end += inv_slope2;
-//     }
-// };
-
-// void fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color) {
-//     float inv_slope1 = (float)(x2 - x0) / (y2 - y0);
-//     float inv_slope2 = (float)(x2 - x1) / (y2 - y1);
-
-//     float x_start = x2;
-//     float x_end = x2;
-
-//     for (int y = y2; y >= y1; y--) {
-//         draw_line(x_start, y, x_end, y, color);
-//         x_start -= inv_slope1;
-//         x_end -= inv_slope2;
-//     }
-// };
-
-// void fill_textured_flat_bottom_triangle(
-//     int x0,
-//     int y0,
-//     int x1,
-//     int y1,
-//     int x2,
-//     int y2,
-//     uint32_t color
-// ) {
-//     float inv_slope1 = (float)(x1 - x0) / (y1 - y0);
-//     float inv_slope2 = (float)(x2 - x0) / (y2 - y0);
-
-//     float x_start = x0;
-//     float x_end = x0;
-
-//     for (int y = y0; y <= y2; y++) {
-//         draw_line(x_start, y, x_end, y, color);
-//         x_start += inv_slope1;
-//         x_end += inv_slope2;
-//     }
-// };
-
-// void fill_textured_flat_top_triangle(
-//     int x0,
-//     int y0,
-//     int x1,
-//     int y1,
-//     int x2,
-//     int y2,
-//     uint32_t color
-// ) {
-//     float inv_slope1 = (float)(x2 - x0) / (y2 - y0);
-//     float inv_slope2 = (float)(x2 - x1) / (y2 - y1);
-
-//     float x_start = x2;
-//     float x_end = x2;
-
-//     for (int y = y2; y >= y1; y--) {
-//         draw_line(x_start, y, x_end, y, color);
-//         x_start -= inv_slope1;
-//         x_end -= inv_slope2;
-//     }
-// };
+    return normal;
+}
 
 void draw_filled_triangle(
     int x0,
@@ -193,7 +129,7 @@ void draw_textured_triangle(
     float w2,
     float u2,
     float v2,
-    uint32_t* texture
+    upng_t* texture
 ) {
     if (y0 > y1) {
         int_swap(&x0, &x1);
@@ -344,7 +280,7 @@ void draw_triangle_pixel(
 void draw_texel(
     int x,
     int y,
-    uint32_t* texture,
+    upng_t* texture,
     vec4_t point_a,
     vec4_t point_b,
     vec4_t point_c,
@@ -379,6 +315,10 @@ void draw_texel(
     interpolated_u /= interpolated_reciprocal_w;
     interpolated_v /= interpolated_reciprocal_w;
 
+    // get mesh texture widht and height dimensions
+    int texture_width = upng_get_width(texture);
+    int texture_height = upng_get_height(texture);
+
     // map the uv coord to the full texture width and height
     int tex_x = abs((int)(interpolated_u * texture_width)) % texture_width;
     int tex_y = abs((int)(interpolated_v * texture_height)) % texture_height;
@@ -386,10 +326,13 @@ void draw_texel(
     // adjust 1/w so the pixels that are closer to the viwer have smaller values
     interpolated_reciprocal_w = 1.0 - interpolated_reciprocal_w;
 
-    // only draw the pixel if the depth value is less than the one previously stored in the z buffer
+    // only draw the pixel if the depth value is less than the one previously stored in the zbuffer
     if (interpolated_reciprocal_w < get_zbuffer_at(x, y)) {
 
-        draw_pixel(x, y, texture[(texture_width * tex_y) + tex_x]);
+        // get the buffer of colors from the texture
+        uint32_t* texture_buffer = (uint32_t*)upng_get_buffer(texture);
+
+        draw_pixel(x, y, texture_buffer[(texture_width * tex_y) + tex_x]);
 
         // update z buffer value with the 1/w with this pixel
         update_zbuffer_at(x, y, interpolated_reciprocal_w);

@@ -102,7 +102,7 @@ void draw_grid(void) {
 }
 
 void draw_pixel(int x, int y, uint32_t color) {
-    if (x < 0 || x > window_width || y < 0 || y >= window_height)
+    if (x < 0 || x >= window_width || y < 0 || y >= window_height)
         return;
     color_buffer[(window_width * y) + x] = color;
 }
@@ -172,7 +172,11 @@ float get_zbuffer_at(int x, int y) {
     return z_buffer[(window_width * y) + x];
 }
 
-void update_zbuffer_at(int x, int y, float value) { z_buffer[(window_width * y) + x] = value; }
+void update_zbuffer_at(int x, int y, float value) {
+    if (x < 0 || x >= window_width || y < 0 || y >= window_height)
+        return;
+    z_buffer[(window_width * y) + x] = value;
+}
 
 void destroy_window(void) {
     SDL_DestroyRenderer(renderer);

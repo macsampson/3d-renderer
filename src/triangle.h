@@ -2,6 +2,7 @@
 #define TRIANGLE_H
 
 #include "texture.h"
+#include "upng.h"
 #include "vector.h"
 #include <stdint.h>
 
@@ -19,9 +20,13 @@ typedef struct {
     vec4_t points[3];
     tex2_t tex_coords[3];
     uint32_t color;
+    upng_t* texture;
 } triangle_t;
 
 int compare_triangle_depth(const void* a, const void* b);
+
+vec3_t get_triangle_normal(vec4_t vertices[3]);
+
 void draw_filled_triangle(
     int x0,
     int y0,
@@ -57,7 +62,7 @@ void draw_textured_triangle(
     float w2,
     float u2,
     float v2,
-    uint32_t* texture
+    upng_t* texture
 );
 void fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int Mx, int My, uint32_t color);
 void fill_flat_top_triangle(int x1, int y1, int Mx, int My, int x2, int y2, uint32_t color);
@@ -65,7 +70,7 @@ void fill_flat_top_triangle(int x1, int y1, int Mx, int My, int x2, int y2, uint
 void draw_texel(
     int x,
     int y,
-    uint32_t* texture,
+    upng_t* texture,
     vec4_t point_a,
     vec4_t point_b,
     vec4_t point_c,
