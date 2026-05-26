@@ -16,7 +16,7 @@ A software rasterizer written in C, with no graphics API. All rendering (vertex 
 - **MTL material parsing**: OBJ/MTL loader resolves per-face material assignments and loads each referenced texture, supporting models with multiple materials and texture atlases
 - **Multiple simultaneous meshes**: scene graph supports loading and transforming several independent OBJ meshes per frame
 - **FPS camera with mouse look**: SDL relative mouse mode drives yaw/pitch rotation; WASD + Q/E for 6DOF movement
-- **Orbit camera mode**: press `O` to auto-orbit the camera around the loaded mesh's world-space centroid
+- **Orbit camera mode**: press `o` to auto-orbit the camera around the loaded mesh's world-space centroid
 - **Multiple render modes**: toggle at runtime between wireframe, flat-shaded, textured, and combined modes (keys `1`–`6`)
 - **Directional lighting**: flat shading intensity computed from `dot(face_normal, light_dir)` applied as a color scale
 
