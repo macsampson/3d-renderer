@@ -41,6 +41,13 @@ float delta_time;
 // enum render_method render_method;
 #define MOUSE_SENSITIVITY 0.003f
 
+static bool orbit_mode = false;
+static float orbit_angle = 0.0f;
+static float orbit_radius = 5.0f;
+static float orbit_height = 0.0f;
+static float orbit_speed = 0.8f;
+static vec3_t orbit_center = {0, 0, 0};
+
 void setup(void) {
 
     SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -163,6 +170,51 @@ void process_input(void) {
                 set_cull_method(CULL_NONE);
                 break;
             }
+            if (event.key.keysym.sym == SDLK_o) {
+                orbit_mode = !orbit_mode;
+                if (orbit_mode) {
+                    if (get_num_meshes() > 0) {
+                        mesh_t* m = get_mesh(0);
+                        int nv = array_length(m->vertices);
+                        vec3_t sum = {0, 0, 0};
+                        for (int vi = 0; vi < nv; vi++) {
+                            sum.x += m->vertices[vi].x;
+                            sum.y += m->vertices[vi].y;
+                            sum.z += m->vertices[vi].z;
+                        }
+                        vec3_t local_center = {sum.x / nv, sum.y / nv, sum.z / nv};
+
+                        mat4_t world = mat4_identity();
+                        world = mat4_mul_mat4(mat4_make_scale(m->scale.x, m->scale.y, m->scale.z), world);
+                        world = mat4_mul_mat4(mat4_make_rotation_z(m->rotation.z), world);
+                        world = mat4_mul_mat4(mat4_make_rotation_y(m->rotation.y), world);
+                        world = mat4_mul_mat4(mat4_make_rotation_x(m->rotation.x), world);
+                        world = mat4_mul_mat4(mat4_make_translation(m->translation.x, m->translation.y, m->translation.z), world);
+
+                        vec4_t wc = mat4_mul_vec4(world, vec4_from_vec3(local_center));
+                        orbit_center = vec3_from_vec4(wc);
+                    }
+                    vec3_t cam = get_camera_position();
+                    float dx = cam.x - orbit_center.x;
+                    float dz = cam.z - orbit_center.z;
+                    orbit_radius = sqrtf(dx * dx + dz * dz);
+                    if (orbit_radius < 0.5f)
+                        orbit_radius = 5.0f;
+                    orbit_height = cam.y - orbit_center.y;
+                    orbit_angle = atan2f(dz, dx);
+                }
+                break;
+            }
+            if (event.key.keysym.sym == SDLK_LEFTBRACKET) {
+                orbit_speed -= 0.2f;
+                if (orbit_speed < 0.05f)
+                    orbit_speed = 0.05f;
+                break;
+            }
+            if (event.key.keysym.sym == SDLK_RIGHTBRACKET) {
+                orbit_speed += 0.2f;
+                break;
+            }
             // if (event.key.keysym.sym == SDLK_e) {
             //     // camera.position.y += 3.0 * delta_time;
             //     // vec3_t pos = get_camera_position();
@@ -205,31 +257,35 @@ void process_input(void) {
 
             break;
         case SDL_MOUSEMOTION:
-            rotate_camera_yaw(event.motion.xrel * MOUSE_SENSITIVITY);
-            rotate_camera_pitch(event.motion.yrel * MOUSE_SENSITIVITY);
+            if (!orbit_mode) {
+                rotate_camera_yaw(event.motion.xrel * MOUSE_SENSITIVITY);
+                rotate_camera_pitch(event.motion.yrel * MOUSE_SENSITIVITY);
+            }
             break;
         }
     }
 
-    const Uint8* keys = SDL_GetKeyboardState(NULL);
-    vec3_t dir = get_camera_direction();
-    vec3_t up = {0, 1, 0};
-    vec3_t right = vec3_cross(dir, up);
-    vec3_normalize(&right);
-    float speed = 5.0f * delta_time;
+    if (!orbit_mode) {
+        const Uint8* keys = SDL_GetKeyboardState(NULL);
+        vec3_t dir = get_camera_direction();
+        vec3_t up = {0, 1, 0};
+        vec3_t right = vec3_cross(dir, up);
+        vec3_normalize(&right);
+        float speed = 5.0f * delta_time;
 
-    if (keys[SDL_SCANCODE_W])
-        set_camera_position(vec3_add(get_camera_position(), vec3_mult(dir, speed)));
-    if (keys[SDL_SCANCODE_S])
-        set_camera_position(vec3_sub(get_camera_position(), vec3_mult(dir, speed)));
-    if (keys[SDL_SCANCODE_A])
-        set_camera_position(vec3_add(get_camera_position(), vec3_mult(right, speed)));
-    if (keys[SDL_SCANCODE_D])
-        set_camera_position(vec3_sub(get_camera_position(), vec3_mult(right, speed)));
-    if (keys[SDL_SCANCODE_E])
-        set_camera_position(vec3_add(get_camera_position(), vec3_mult(up, speed)));
-    if (keys[SDL_SCANCODE_Q])
-        set_camera_position(vec3_sub(get_camera_position(), vec3_mult(up, speed)));
+        if (keys[SDL_SCANCODE_W])
+            set_camera_position(vec3_add(get_camera_position(), vec3_mult(dir, speed)));
+        if (keys[SDL_SCANCODE_S])
+            set_camera_position(vec3_sub(get_camera_position(), vec3_mult(dir, speed)));
+        if (keys[SDL_SCANCODE_A])
+            set_camera_position(vec3_add(get_camera_position(), vec3_mult(right, speed)));
+        if (keys[SDL_SCANCODE_D])
+            set_camera_position(vec3_sub(get_camera_position(), vec3_mult(right, speed)));
+        if (keys[SDL_SCANCODE_E])
+            set_camera_position(vec3_add(get_camera_position(), vec3_mult(up, speed)));
+        if (keys[SDL_SCANCODE_Q])
+            set_camera_position(vec3_sub(get_camera_position(), vec3_mult(up, speed)));
+    }
 }
 
 void process_graphics_pipeline_stages(mesh_t* mesh) {
@@ -397,7 +453,19 @@ void update(void) {
     num_triangles_to_render = 0;
     num_skybox_triangles = 0;
 
-    vec3_t target = get_camera_lookat_target();
+    vec3_t target;
+    if (orbit_mode) {
+        orbit_angle += orbit_speed * delta_time;
+        vec3_t cam_pos = {
+            orbit_center.x + orbit_radius * cosf(orbit_angle),
+            orbit_center.y + orbit_height,
+            orbit_center.z + orbit_radius * sinf(orbit_angle)
+        };
+        set_camera_position(cam_pos);
+        target = orbit_center;
+    } else {
+        target = get_camera_lookat_target();
+    }
     view_matrix = mat4_look_at(get_camera_position(), target, vec3_new(0, 1, 0));
 
     if (is_skybox_initialized())
