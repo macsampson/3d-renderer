@@ -1,22 +1,24 @@
 # Software 3D Renderer
 
-A software rasterizer written from scratch in C, with no graphics API. All rendering — vertex transformation, clipping, rasterization, and texturing — runs on the CPU using SDL2 only for window management and pixel buffer presentation.
+A software rasterizer written from scratch in C, with no graphics API. All rendering (vertex transformation, clipping, rasterization, and texturing) runs on the CPU using SDL2 only for window management and pixel buffer presentation.
 
 ![Link rendered with textured skybox](gif/link_1.gif)
 
+*Link model © Nintendo. Used for demonstration purposes only.*
+
 ## Features
 
-- **Perspective-correct texture mapping** — UV coordinates and depth are interpolated using barycentric weights divided by `1/w`, correcting the affine distortion that plagues simpler scanline renderers
-- **Z-buffer depth testing** — per-pixel `1/w` depth buffer enables correct occlusion for complex, overlapping geometry
-- **View-frustum clipping (Sutherland-Hodgman)** — polygons are clipped against all six frustum planes in view space before projection, correctly handling geometry that straddles the near plane
-- **Backface culling** — faces whose normal dot product with the camera ray is negative are discarded before the projection stage
-- **Cubemap skybox** — six-face skybox rendered in a separate depth-bypassed pass so geometry can always overdraw it without z-fighting
-- **MTL material parsing** — OBJ/MTL loader resolves per-face material assignments and loads each referenced texture, supporting models with multiple materials and texture atlases
-- **Multiple simultaneous meshes** — scene graph supports loading and transforming several independent OBJ meshes per frame
-- **FPS camera with mouse look** — SDL relative mouse mode drives yaw/pitch rotation; WASD + Q/E for 6DOF movement
-- **Orbit camera mode** — press `O` to auto-orbit the camera around the loaded mesh's world-space centroid
-- **Multiple render modes** — toggle at runtime between wireframe, flat-shaded, textured, and combined modes (keys `1`–`6`)
-- **Directional lighting** — flat shading intensity computed from `dot(face_normal, light_dir)` applied as a color scale
+- **Perspective-correct texture mapping**: UV coordinates and depth are interpolated using barycentric weights divided by `1/w`, correcting the affine distortion that plagues simpler scanline renderers
+- **Z-buffer depth testing**: per-pixel `1/w` depth buffer enables correct occlusion for complex, overlapping geometry
+- **View-frustum clipping (Sutherland-Hodgman)**: polygons are clipped against all six frustum planes in view space before projection, correctly handling geometry that straddles the near plane
+- **Backface culling**: faces whose normal dot product with the camera ray is negative are discarded before the projection stage
+- **Cubemap skybox**: six-face skybox rendered in a separate depth-bypassed pass so geometry can always overdraw it without z-fighting
+- **MTL material parsing**: OBJ/MTL loader resolves per-face material assignments and loads each referenced texture, supporting models with multiple materials and texture atlases
+- **Multiple simultaneous meshes**: scene graph supports loading and transforming several independent OBJ meshes per frame
+- **FPS camera with mouse look**: SDL relative mouse mode drives yaw/pitch rotation; WASD + Q/E for 6DOF movement
+- **Orbit camera mode**: press `O` to auto-orbit the camera around the loaded mesh's world-space centroid
+- **Multiple render modes**: toggle at runtime between wireframe, flat-shaded, textured, and combined modes (keys `1`–`6`)
+- **Directional lighting**: flat shading intensity computed from `dot(face_normal, light_dir)` applied as a color scale
 
 ## Pipeline Overview
 
@@ -62,5 +64,5 @@ The rasterizer uses a flat-top/flat-bottom triangle decomposition with a scanlin
 
 Frustum clipping operates on polygons (not triangles) so that a clipped triangle can produce up to 9 vertices. After clipping, the polygon is re-triangulated into a fan before projection.
 
-The skybox renders on a unit cube scaled to ±10 world units. It runs in a dedicated first pass with depth writes disabled, then the z-buffer is cleared before scene geometry renders — this avoids skybox faces z-fighting each other while letting any geometry overdraw the sky correctly.
+The skybox renders on a unit cube scaled to ±10 world units. It runs in a dedicated first pass with depth writes disabled, then the z-buffer is cleared before scene geometry renders: this avoids skybox faces z-fighting each other while letting any geometry overdraw the sky correctly.
 
