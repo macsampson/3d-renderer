@@ -30,6 +30,8 @@ compile_commands.json   # if generated, not hand-written
 .DS_Store
 Thumbs.db
 
+OPTIMIZATIONS.md
+
 # Binary
 /renderer
 
