@@ -54,4 +54,7 @@ void clear_z_buffer(void);
 float get_zbuffer_at(int x, int y);
 void update_zbuffer_at(int x, int y, float value);
 
+void set_depth_bypass(bool enabled);
+bool is_depth_bypass(void);
+
 void destroy_window(void);

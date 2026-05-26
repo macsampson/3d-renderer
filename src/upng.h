@@ -63,6 +63,7 @@ void		upng_free			(upng_t* upng);
 
 upng_error	upng_header			(upng_t* upng);
 upng_error	upng_decode			(upng_t* upng);
+upng_error	upng_ensure_rgba8	(upng_t* upng);
 
 upng_error	upng_get_error		(const upng_t* upng);
 unsigned	upng_get_error_line	(const upng_t* upng);

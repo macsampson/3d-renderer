@@ -4,6 +4,7 @@
 #include "texture.h"
 #include "upng.h"
 #include "vector.h"
+#include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -185,7 +186,8 @@ void draw_textured_triangle(
             int x_end = x0 + (y - y0) * inv_slope2;
             if (x_end < x_start)
                 int_swap(&x_start, &x_end);
-            for (int x = x_start; x < x_end; x++) {
+            int x_lim = is_depth_bypass() ? x_end + 1 : x_end;
+            for (int x = x_start; x < x_lim; x++) {
                 draw_texel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv, c_uv);
             }
         }
@@ -208,7 +210,8 @@ void draw_textured_triangle(
             int x_end = x0 + (y - y0) * inv_slope2;
             if (x_end < x_start)
                 int_swap(&x_start, &x_end);
-            for (int x = x_start; x < x_end; x++) {
+            int x_lim = is_depth_bypass() ? x_end + 1 : x_end;
+            for (int x = x_start; x < x_lim; x++) {
                 draw_texel(x, y, texture, point_a, point_b, point_c, a_uv, b_uv, c_uv);
             }
         }
@@ -320,21 +323,22 @@ void draw_texel(
     int texture_height = upng_get_height(texture);
 
     // map the uv coord to the full texture width and height
-    int tex_x = abs((int)(interpolated_u * texture_width)) % texture_width;
-    int tex_y = abs((int)(interpolated_v * texture_height)) % texture_height;
+    int tex_x = (int)(fabsf(interpolated_u) * texture_width);
+    int tex_y = (int)(fabsf(interpolated_v) * texture_height);
+    if (tex_x < 0 || tex_x >= texture_width)  tex_x = 0;
+    if (tex_y < 0 || tex_y >= texture_height) tex_y = 0;
 
-    // adjust 1/w so the pixels that are closer to the viwer have smaller values
-    interpolated_reciprocal_w = 1.0 - interpolated_reciprocal_w;
+    uint32_t* texture_buffer = (uint32_t*)upng_get_buffer(texture);
+    uint32_t texel = texture_buffer[(texture_width * tex_y) + tex_x];
 
-    // only draw the pixel if the depth value is less than the one previously stored in the zbuffer
-    if (interpolated_reciprocal_w < get_zbuffer_at(x, y)) {
-
-        // get the buffer of colors from the texture
-        uint32_t* texture_buffer = (uint32_t*)upng_get_buffer(texture);
-
-        draw_pixel(x, y, texture_buffer[(texture_width * tex_y) + tex_x]);
-
-        // update z buffer value with the 1/w with this pixel
-        update_zbuffer_at(x, y, interpolated_reciprocal_w);
+    if (is_depth_bypass()) {
+        draw_pixel(x, y, texel);
+    } else {
+        // adjust 1/w so the pixels that are closer to the viewer have smaller values
+        interpolated_reciprocal_w = 1.0 - interpolated_reciprocal_w;
+        if (interpolated_reciprocal_w < get_zbuffer_at(x, y)) {
+            draw_pixel(x, y, texel);
+            update_zbuffer_at(x, y, interpolated_reciprocal_w);
+        }
     }
 }

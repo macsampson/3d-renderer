@@ -1348,6 +1348,35 @@ upng_t* upng_new_from_file(const char* filename) {
     return upng;
 }
 
+upng_error upng_ensure_rgba8(upng_t* upng) {
+    if (upng->error != UPNG_EOK) return upng->error;
+    if (upng->format == UPNG_RGBA8) return UPNG_EOK;
+    if (upng->format != UPNG_RGB8) return upng->error;
+
+    unsigned long n = (unsigned long)upng->width * upng->height;
+    unsigned char* rgba = (unsigned char*)malloc(n * 4);
+    if (rgba == NULL) {
+        SET_ERROR(upng, UPNG_ENOMEM);
+        return upng->error;
+    }
+
+    const unsigned char* rgb = upng->buffer;
+    for (unsigned long i = 0; i < n; i++) {
+        rgba[i * 4 + 0] = rgb[i * 3 + 0];
+        rgba[i * 4 + 1] = rgb[i * 3 + 1];
+        rgba[i * 4 + 2] = rgb[i * 3 + 2];
+        rgba[i * 4 + 3] = 0xFF;
+    }
+
+    free(upng->buffer);
+    upng->buffer = rgba;
+    upng->size = n * 4;
+    upng->format = UPNG_RGBA8;
+    upng->color_type = UPNG_RGBA;
+    upng->color_depth = 8;
+    return UPNG_EOK;
+}
+
 void upng_free(upng_t* upng) {
     /* deallocate image buffer */
     if (upng->buffer != NULL) {

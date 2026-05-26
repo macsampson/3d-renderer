@@ -5,6 +5,7 @@
 #include "light.h"
 #include "matrix.h"
 #include "mesh.h"
+#include "skybox.h"
 #include "texture.h"
 #include "triangle.h"
 #include "upng.h"
@@ -21,6 +22,9 @@
 #define MAX_TRIANGLES_PER_MESH 10000
 triangle_t triangles_to_render[MAX_TRIANGLES_PER_MESH];
 int num_triangles_to_render = 0;
+
+triangle_t skybox_triangles_to_render[MAX_SKYBOX_TRIANGLES];
+int num_skybox_triangles = 0;
 
 // vec3_t camera_pos = {0, 0, 0};
 mat4_t proj_matrix;
@@ -61,16 +65,52 @@ void setup(void) {
     // initialize frustum planes with a point and a normal
     init_frustum_planes(fov_x, fov_y, z_near, z_far);
 
-    // TODO
+    // cubemap pack uses +X-forward convention; renderer camera faces +Z
+    // right(+X)=front, left(-X)=back, top(+Y)=top, bottom(-Y)=bottom, front(+Z)=right,
+    // back(-Z)=left
+    init_skybox(
+        "./assets/skybox/front.png",  // right  (+X, camera-right)
+        "./assets/skybox/back.png",   // left   (-X, camera-left)
+        "./assets/skybox/top.png",    // top    (+Y)
+        "./assets/skybox/bottom.png", // bottom (-Y)
+        "./assets/skybox/right.png",  // front  (+Z, camera-forward)
+        "./assets/skybox/left.png"    // back   (-Z, camera-back)
+    );
+
+    // load_mesh(
+    //     "./assets/midna_hw/C_MIDNA_PRINCESS.obj",
+    //     "./assets/crab.png",
+    //     vec3_new(0.1, 0.1, 0.1),
+    //     vec3_new(-3, 0, 8),
+    //     vec3_new(0, 0, 0)
+    // );
+
     load_mesh(
-        "./assets/wolf/DolLinkkemono.obj",
+        "./assets/adult_link/Untitled.obj",
         "./assets/crab.png",
         vec3_new(1, 1, 1),
-        vec3_new(-3, 0, 8),
+        vec3_new(3, 0, 8),
         vec3_new(0, 0, 0)
     );
+
     // load_mesh(
-    //     "./assets/adult_link/Untitled.obj",
+    //     "./assets/links_house/Main_House.obj",
+    //     "./assets/crab.png",
+    //     vec3_new(1, 1, 1),
+    //     vec3_new(3, 0, 8),
+    //     vec3_new(0, 0, 0)
+    // );
+
+    // load_mesh(
+    //     "./assets/link_la/majora/MajorasMask.obj",
+    //     "./assets/crab.png",
+    //     vec3_new(1, 1, 1),
+    //     vec3_new(3, 0, 8),
+    //     vec3_new(0, 0, 0)
+    // );
+
+    // load_mesh(
+    //     "./assets/eva/Eve01.obj",
     //     "./assets/crab.png",
     //     vec3_new(1, 1, 1),
     //     vec3_new(3, 0, 8),
@@ -199,12 +239,6 @@ void process_graphics_pipeline_stages(mesh_t* mesh) {
     mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh->rotation.x);
     mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh->rotation.y);
     mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh->rotation.z);
-
-    // offset the camera in the direction im looking at
-    vec3_t target = get_camera_lookat_target();
-    vec3_t up_dir = vec3_new(0, 1, 0);
-
-    view_matrix = mat4_look_at(get_camera_position(), target, up_dir);
 
     int num_faces = array_length(mesh->faces);
     for (int i = 0; i < num_faces; i++) {
@@ -361,6 +395,13 @@ void update(void) {
     // intialize array of triangles to render
     // triangles_to_render = NULL;
     num_triangles_to_render = 0;
+    num_skybox_triangles = 0;
+
+    vec3_t target = get_camera_lookat_target();
+    view_matrix = mat4_look_at(get_camera_position(), target, vec3_new(0, 1, 0));
+
+    if (is_skybox_initialized())
+        process_skybox(proj_matrix, view_matrix, skybox_triangles_to_render, &num_skybox_triangles);
 
     for (int mesh_idx = 0; mesh_idx < get_num_meshes(); mesh_idx++) {
 
@@ -390,6 +431,38 @@ void render(void) {
 
     draw_grid();
 
+    // Pass 1: skybox — bypass depth test so adjacent faces never z-fight
+    set_depth_bypass(true);
+    for (int i = 0; i < num_skybox_triangles; i++) {
+        triangle_t t = skybox_triangles_to_render[i];
+        if (t.texture != NULL) {
+            draw_textured_triangle(
+                t.points[0].x,
+                t.points[0].y,
+                t.points[0].z,
+                t.points[0].w,
+                t.tex_coords[0].u,
+                t.tex_coords[0].v,
+                t.points[1].x,
+                t.points[1].y,
+                t.points[1].z,
+                t.points[1].w,
+                t.tex_coords[1].u,
+                t.tex_coords[1].v,
+                t.points[2].x,
+                t.points[2].y,
+                t.points[2].z,
+                t.points[2].w,
+                t.tex_coords[2].u,
+                t.tex_coords[2].v,
+                t.texture
+            );
+        }
+    }
+    set_depth_bypass(false);
+    clear_z_buffer();
+
+    // Pass 2: scene geometry
     // Loop all projected points and render
     // int num_triangles = array_length(triangles_to_render);
     for (int i = 0; i < num_triangles_to_render; i++) {

@@ -17,6 +17,7 @@ static int window_height = 200;
 
 static int render_method;
 static int cull_method;
+static bool depth_bypass = false;
 
 int get_window_width(void) { return window_width; }
 int get_window_height(void) { return window_height; }
@@ -177,6 +178,9 @@ void update_zbuffer_at(int x, int y, float value) {
         return;
     z_buffer[(window_width * y) + x] = value;
 }
+
+void set_depth_bypass(bool enabled) { depth_bypass = enabled; }
+bool is_depth_bypass(void) { return depth_bypass; }
 
 void destroy_window(void) {
     SDL_DestroyRenderer(renderer);
