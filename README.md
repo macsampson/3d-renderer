@@ -1,6 +1,6 @@
 # Software 3D Renderer
 
-A software rasterizer written from scratch in C, with no graphics API. All rendering (vertex transformation, clipping, rasterization, and texturing) runs on the CPU using SDL2 only for window management and pixel buffer presentation.
+A software rasterizer written in C, with no graphics API. All rendering (vertex transformation, clipping, rasterization, and texturing) runs on the CPU using SDL2 only for window management and pixel buffer presentation. This is an educational project, and is based on and extended from [Pikuma's 3D Computer Graphics course](https://pikuma.com/courses/learn-3d-computer-graphics-programming).
 
 ![Link rendered with textured skybox](gif/link_1.gif)
 
@@ -23,12 +23,28 @@ A software rasterizer written from scratch in C, with no graphics API. All rende
 ## Pipeline Overview
 
 ```
-OBJ/MTL load → world transform (TRS matrices) → view transform (LookAt)
-  → backface cull → frustum clip → perspective project
-  → NDC → screen space → rasterize (scanline) → z-test → texel sample
+OBJ/MTL load
+  ↓
+world transform (TRS matrices)
+  ↓
+view transform (LookAt)
+  ↓
+backface cull
+  ↓
+frustum clip 
+  ↓
+perspective project
+  ↓
+NDC (normalized device coordinates) → screen space
+  ↓
+rasterize (scanline)
+  ↓
+z-test
+  ↓
+texel sample
 ```
 
-Each frame the pipeline runs entirely on the CPU. Matrices are built from explicit scale, rotation (X/Y/Z), and translation components and combined with `mat4_mul_mat4`. Projection uses a standard perspective matrix with configurable FOV, aspect ratio, and near/far planes.
+Each frame the pipeline runs entirely on the CPU. Matrices are built from explicit scale, rotation (X/Y/Z), and translation components and combined with matrix multiplication. Projection uses a standard perspective matrix with configurable FOV, aspect ratio, and near/far planes.
 
 ## Controls
 
@@ -53,10 +69,8 @@ Each frame the pipeline runs entirely on the CPU. Matrices are built from explic
 
 ```sh
 make
-./renderer
+make run 
 ```
-
-Requires SDL2. Compiled with `-O3 -march=native -flto` for auto-vectorization and cross-file inlining of the hot math functions.
 
 ## Implementation Notes
 
