@@ -1,6 +1,8 @@
 # Software 3D Renderer
 
-A software rasterizer written in C, with no graphics API. All rendering (vertex transformation, clipping, rasterization, and texturing) runs on the CPU using SDL2 only for window management and pixel buffer presentation. This is an educational project, and is based on and extended from [Pikuma's 3D Computer Graphics course](https://pikuma.com/courses/learn-3d-computer-graphics-programming).
+A software rasterizer written in C, with no graphics API. All rendering (vertex transformation, clipping, rasterization, and texturing) runs on the CPU using SDL2 only for window management and pixel buffer presentation. 
+
+This is an educational project, and is based on and extended from [Pikuma's 3D Computer Graphics course](https://pikuma.com/courses/learn-3d-computer-graphics-programming).
 
 ![Link rendered with textured skybox](gif/link_1.gif)
 
