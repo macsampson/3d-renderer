@@ -1,5 +1,6 @@
 
 #include "display.h"
+#include <SDL2/SDL_video.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -45,7 +46,7 @@ bool initialize_window(void) {
         SDL_WINDOWPOS_CENTERED,
         fullscreen_width,
         fullscreen_height,
-        SDL_WINDOW_BORDERLESS
+        SDL_WINDOW_MAXIMIZED
     );
     if (!window) {
         fprintf(stderr, "Error creating SDL window.\n");
@@ -58,8 +59,12 @@ bool initialize_window(void) {
         return false;
     }
 
-    color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * window_width * window_height);
-    z_buffer = (float*)malloc(sizeof(float) * window_width * window_height);
+    // 3.1: single slab so color and z buffers share TLB pages
+    size_t cbuf_bytes = sizeof(uint32_t) * window_width * window_height;
+    size_t zbuf_bytes = sizeof(float) * window_width * window_height;
+    uint8_t* slab = malloc(cbuf_bytes + zbuf_bytes);
+    color_buffer = (uint32_t*)slab;
+    z_buffer = (float*)(slab + cbuf_bytes);
 
     color_buffer_texture = SDL_CreateTexture(
         renderer,
@@ -131,7 +136,7 @@ void draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
     float curr_y = y0;
 
     for (int i = 0; i <= side_length; i++) {
-        draw_pixel(round(curr_x), round(curr_y), color);
+        draw_pixel((int)(curr_x + 0.5f), (int)(curr_y + 0.5f), color);
         curr_x += x_inc;
         curr_y += y_inc;
     }
@@ -155,8 +160,12 @@ void render_color_buffer(void) {
 }
 
 void clear_color_buffer(uint32_t color) {
-    for (int i = 0; i < window_width * window_height; i++) {
-        color_buffer[i] = color;
+    if (color == 0) {
+        memset(color_buffer, 0, sizeof(uint32_t) * window_width * window_height);
+    } else {
+        int n = window_width * window_height;
+        for (int i = 0; i < n; i++)
+            color_buffer[i] = color;
     }
 }
 
@@ -182,10 +191,14 @@ void update_zbuffer_at(int x, int y, float value) {
 void set_depth_bypass(bool enabled) { depth_bypass = enabled; }
 bool is_depth_bypass(void) { return depth_bypass; }
 
+uint32_t* get_color_buffer(void) { return color_buffer; }
+float* get_z_buffer(void) { return z_buffer; }
+
+SDL_Window* get_window(void) { return window; }
+
 void destroy_window(void) {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-    free(color_buffer);
-    free(z_buffer);
+    free(color_buffer); // frees the whole slab (z_buffer is offset into same allocation)
 }

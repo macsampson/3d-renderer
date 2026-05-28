@@ -30,8 +30,8 @@ mat4_t mat4_make_translation(float tx, float ty, float tz) {
 };
 
 mat4_t mat4_make_rotation_x(float angle) {
-    float c = cos(angle);
-    float s = sin(angle);
+    float c = cosf(angle);
+    float s = sinf(angle);
 
     mat4_t m = mat4_identity();
 
@@ -44,8 +44,8 @@ mat4_t mat4_make_rotation_x(float angle) {
 };
 
 mat4_t mat4_make_rotation_y(float angle) {
-    float c = cos(angle);
-    float s = sin(angle);
+    float c = cosf(angle);
+    float s = sinf(angle);
 
     mat4_t m = mat4_identity();
 
@@ -58,8 +58,8 @@ mat4_t mat4_make_rotation_y(float angle) {
 };
 
 mat4_t mat4_make_rotation_z(float angle) {
-    float c = cos(angle);
-    float s = sin(angle);
+    float c = cosf(angle);
+    float s = sinf(angle);
 
     mat4_t m = mat4_identity();
 
@@ -73,8 +73,8 @@ mat4_t mat4_make_rotation_z(float angle) {
 
 mat4_t mat4_make_perspective(float fov, float aspect, float znear, float zfar) {
     mat4_t m = {{{0}}};
-    m.m[0][0] = aspect * (1 / tan(fov / 2));
-    m.m[1][1] = 1 / tan(fov / 2);
+    m.m[0][0] = aspect * (1.0f / tanf(fov / 2.0f));
+    m.m[1][1] = 1.0f / tanf(fov / 2.0f);
     m.m[2][2] = zfar / (zfar - znear);
     m.m[2][3] = (-zfar * znear) / (zfar - znear);
     m.m[3][2] = 1.0;

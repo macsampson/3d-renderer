@@ -15,8 +15,10 @@
 #include <SDL2/SDL_mouse.h>
 #include <SDL2/SDL_stdinc.h>
 #include <SDL2/SDL_timer.h>
+#include <SDL2/SDL_video.h>
 #include <math.h>
 #include <stdint.h>
+#include <stdio.h>
 
 // triangle_t* triangles_to_render = NULL;
 #define MAX_TRIANGLES_PER_MESH 10000
@@ -185,11 +187,21 @@ void process_input(void) {
                         vec3_t local_center = {sum.x / nv, sum.y / nv, sum.z / nv};
 
                         mat4_t world = mat4_identity();
-                        world = mat4_mul_mat4(mat4_make_scale(m->scale.x, m->scale.y, m->scale.z), world);
+                        world = mat4_mul_mat4(
+                            mat4_make_scale(m->scale.x, m->scale.y, m->scale.z),
+                            world
+                        );
                         world = mat4_mul_mat4(mat4_make_rotation_z(m->rotation.z), world);
                         world = mat4_mul_mat4(mat4_make_rotation_y(m->rotation.y), world);
                         world = mat4_mul_mat4(mat4_make_rotation_x(m->rotation.x), world);
-                        world = mat4_mul_mat4(mat4_make_translation(m->translation.x, m->translation.y, m->translation.z), world);
+                        world = mat4_mul_mat4(
+                            mat4_make_translation(
+                                m->translation.x,
+                                m->translation.y,
+                                m->translation.z
+                            ),
+                            world
+                        );
 
                         vec4_t wc = mat4_mul_vec4(world, vec4_from_vec3(local_center));
                         orbit_center = vec3_from_vec4(wc);
@@ -289,12 +301,34 @@ void process_input(void) {
 }
 
 void process_graphics_pipeline_stages(mesh_t* mesh) {
+    // 1.6: rebuild rotation matrices only when angles change
+    if (!mesh->rotation_cache_valid || mesh->rotation.x != mesh->cached_rotation.x ||
+        mesh->rotation.y != mesh->cached_rotation.y ||
+        mesh->rotation.z != mesh->cached_rotation.z) {
+        mesh->cached_rot_x = mat4_make_rotation_x(mesh->rotation.x);
+        mesh->cached_rot_y = mat4_make_rotation_y(mesh->rotation.y);
+        mesh->cached_rot_z = mat4_make_rotation_z(mesh->rotation.z);
+        mesh->cached_rotation = mesh->rotation;
+        mesh->rotation_cache_valid = true;
+    }
+
+    // 1.1: build world matrix once per mesh, then precompose with view matrix
     mat4_t scale_matrix = mat4_make_scale(mesh->scale.x, mesh->scale.y, mesh->scale.z);
     mat4_t translation_matrix =
         mat4_make_translation(mesh->translation.x, mesh->translation.y, mesh->translation.z);
-    mat4_t rotation_matrix_x = mat4_make_rotation_x(mesh->rotation.x);
-    mat4_t rotation_matrix_y = mat4_make_rotation_y(mesh->rotation.y);
-    mat4_t rotation_matrix_z = mat4_make_rotation_z(mesh->rotation.z);
+
+    mat4_t world_matrix = mat4_identity();
+    world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
+    world_matrix = mat4_mul_mat4(mesh->cached_rot_z, world_matrix);
+    world_matrix = mat4_mul_mat4(mesh->cached_rot_y, world_matrix);
+    world_matrix = mat4_mul_mat4(mesh->cached_rot_x, world_matrix);
+    world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
+
+    mat4_t view_world = mat4_mul_mat4(view_matrix, world_matrix);
+
+    // 1.4: hoist screen-space constants out of the projection loop
+    const float half_w = get_window_width() * 0.5f;
+    const float half_h = get_window_height() * 0.5f;
 
     int num_faces = array_length(mesh->faces);
     for (int i = 0; i < num_faces; i++) {
@@ -312,20 +346,8 @@ void process_graphics_pipeline_stages(mesh_t* mesh) {
         for (int j = 0; j < 3; j++) {
             vec4_t transformed_vertex = vec4_from_vec3(face_vertices[j]);
 
-            // // use matrix to scale our original vertex
-
-            // world matrix
-            mat4_t world_matrix = mat4_identity();
-            world_matrix = mat4_mul_mat4(scale_matrix, world_matrix);
-            world_matrix = mat4_mul_mat4(rotation_matrix_z, world_matrix);
-            world_matrix = mat4_mul_mat4(rotation_matrix_y, world_matrix);
-            world_matrix = mat4_mul_mat4(rotation_matrix_x, world_matrix);
-            world_matrix = mat4_mul_mat4(translation_matrix, world_matrix);
-
-            transformed_vertex = mat4_mul_vec4(world_matrix, transformed_vertex);
-
-            // multiply the view matrix by the vector to transform the scene into vector space
-            transformed_vertex = mat4_mul_vec4(view_matrix, transformed_vertex);
+            // 1.1: single transform with precomposed view*world matrix
+            transformed_vertex = mat4_mul_vec4(view_world, transformed_vertex);
 
             transformed_vertices[j] = transformed_vertex;
         }
@@ -381,13 +403,9 @@ void process_graphics_pipeline_stages(mesh_t* mesh) {
 
                 projected_points[j].y *= -1;
 
-                // scale into the view
-                projected_points[j].x *= (get_window_width() / 2.0);
-                projected_points[j].y *= (get_window_height() / 2.0);
-
-                // translate
-                projected_points[j].x += (int)(get_window_width() / 2);
-                projected_points[j].y += (int)(get_window_height() / 2);
+                // 1.4: scale and translate using hoisted constants
+                projected_points[j].x = projected_points[j].x * half_w + half_w;
+                projected_points[j].y = projected_points[j].y * half_h + half_h;
             }
 
             float light_intensity_factor = -vec3_dot(face_normal, get_light_dir());
@@ -439,9 +457,9 @@ void update(void) {
 
     int wait_time = FRAME_TARGET_TIME - (SDL_GetTicks() - previous_frame_time);
 
-    if (wait_time > 0 && wait_time <= FRAME_TARGET_TIME) {
-        SDL_Delay(wait_time);
-    }
+    // if (wait_time > 0 && wait_time <= FRAME_TARGET_TIME) {
+    //     SDL_Delay(wait_time);
+    // }
 
     // get a delta time fator
     delta_time = (SDL_GetTicks() - previous_frame_time) / 1000.0;
@@ -507,19 +525,16 @@ void render(void) {
             draw_textured_triangle(
                 t.points[0].x,
                 t.points[0].y,
-                t.points[0].z,
                 t.points[0].w,
                 t.tex_coords[0].u,
                 t.tex_coords[0].v,
                 t.points[1].x,
                 t.points[1].y,
-                t.points[1].z,
                 t.points[1].w,
                 t.tex_coords[1].u,
                 t.tex_coords[1].v,
                 t.points[2].x,
                 t.points[2].y,
-                t.points[2].z,
                 t.points[2].w,
                 t.tex_coords[2].u,
                 t.tex_coords[2].v,
@@ -528,7 +543,8 @@ void render(void) {
         }
     }
     set_depth_bypass(false);
-    clear_z_buffer();
+    // z-buffer clear not needed here: bypass mode never writes z, so the
+    // clear_z_buffer() at the top of render() is still valid.
 
     // Pass 2: scene geometry
     // Loop all projected points and render
@@ -549,15 +565,12 @@ void render(void) {
             draw_filled_triangle(
                 triangle.points[0].x,
                 triangle.points[0].y,
-                triangle.points[0].z,
                 triangle.points[0].w,
                 triangle.points[1].x,
                 triangle.points[1].y,
-                triangle.points[1].z,
                 triangle.points[1].w,
                 triangle.points[2].x,
                 triangle.points[2].y,
-                triangle.points[2].z,
                 triangle.points[2].w,
                 triangle.color
             );
@@ -568,19 +581,16 @@ void render(void) {
             draw_textured_triangle(
                 triangle.points[0].x,
                 triangle.points[0].y,
-                triangle.points[0].z,
                 triangle.points[0].w,
                 triangle.tex_coords[0].u,
                 triangle.tex_coords[0].v,
                 triangle.points[1].x,
                 triangle.points[1].y,
-                triangle.points[1].z,
                 triangle.points[1].w,
                 triangle.tex_coords[1].u,
                 triangle.tex_coords[1].v,
                 triangle.points[2].x,
                 triangle.points[2].y,
-                triangle.points[2].z,
                 triangle.points[2].w,
                 triangle.tex_coords[2].u,
                 triangle.tex_coords[2].v,
@@ -606,6 +616,18 @@ void render(void) {
     // array_free(triangles_to_render);
 
     render_color_buffer();
+
+    static int frames = 0;
+    static Uint32 last = UINT32_MAX;
+    frames++;
+    Uint32 now = SDL_GetTicks();
+    if (now - last >= 1000) {
+        char title[32];
+        snprintf(title, sizeof(title), "3D Renderer - %d FPS", frames);
+        SDL_SetWindowTitle(get_window(), title);
+        frames = 0;
+        last = now;
+    }
 }
 
 void free_resources(void) {

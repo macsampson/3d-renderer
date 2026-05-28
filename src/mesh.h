@@ -1,9 +1,11 @@
 #pragma once
 #define MESH_H
 
+#include "matrix.h"
 #include "triangle.h"
 #include "upng.h"
 #include "vector.h"
+#include <stdbool.h>
 
 typedef struct {
     char name[64];
@@ -18,6 +20,9 @@ typedef struct {
     vec3_t rotation;
     vec3_t scale;
     vec3_t translation;
+    mat4_t cached_rot_x, cached_rot_y, cached_rot_z;
+    vec3_t cached_rotation;
+    bool rotation_cache_valid;
 } mesh_t;
 
 void load_mesh(

@@ -26,6 +26,7 @@ void load_mesh(
     meshes[mesh_count].scale = scale;
     meshes[mesh_count].translation = translation;
     meshes[mesh_count].rotation = rotation;
+    meshes[mesh_count].rotation_cache_valid = false;
 
     mesh_count++;
 }

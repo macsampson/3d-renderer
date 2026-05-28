@@ -57,4 +57,8 @@ void update_zbuffer_at(int x, int y, float value);
 void set_depth_bypass(bool enabled);
 bool is_depth_bypass(void);
 
+uint32_t* get_color_buffer(void);
+float* get_z_buffer(void);
+
+SDL_Window* get_window(void);
 void destroy_window(void);
